@@ -25,9 +25,42 @@ def get_tenant_access_token():
         raise Exception(f"获取飞书 token 失败: {data}")
     return data["tenant_access_token"]
 
+# === 从知识库节点获取 obj_token（作为 APP_TOKEN）===
+def get_app_token_from_wiki_node(tenant_access_token):
+    """
+    调用飞书 /wiki/v2/spaces/get_node 接口，获取节点的 obj_token。
+    
+    注意：
+      - 此 obj_token 是该 wiki 节点（文档/文件夹）的 token，格式如 doc_xxx、box_xxx
+      - 它 **不是** 多维表格的 app_token（app_xxx），除非该节点本身是一个多维表格（极少见）
+    
+    参数:
+      tenant_access_token: 有效的飞书 tenant_access_token
+      wiki_token: 知识库节点的 token（即 URL 中的 token 参数，如 Bxg8w1ZyFiumEykOE2tcnWgfn9c）
+    
+    返回:
+      obj_token: 节点的对象 token（字符串）
+    """
+    url = "https://open.feishu.cn/open-apis/wiki/v2/spaces/get_node"
+    params = {
+        "obj_type": "wiki",
+        "token": {BITABLE_APP_TOKEN}
+    }
+    headers = {
+        "Authorization": f"Bearer {tenant_access_token}"
+    }
+    resp = requests.get(url, headers=headers, params=params)
+    data = resp.json()
+    
+    if data.get("code") != 0:
+        raise Exception(f"获取 wiki 节点失败: {data}")
+    
+    obj_token = data["data"]["node"]["obj_token"]
+    return obj_token
+
 # === 获取所有记录（支持分页）===
-def fetch_bitable_records(token):
-    url = f"https://open.feishu.cn/open-apis/bitable/v1/apps/{BITABLE_APP_TOKEN}/tables/{TABLE_ID}/records"
+def fetch_bitable_records(token, appToken):
+    url = f"https://open.feishu.cn/open-apis/bitable/v1/apps/{appToken}/tables/{TABLE_ID}/records"
     headers = {"Authorization": f"Bearer {token}"}
     records = []
     page_token = None
@@ -66,7 +99,8 @@ def extract_rich_text(field_value):
 # === 主逻辑 ===
 def main():
     token = get_tenant_access_token()
-    records = fetch_bitable_records(token)
+    appToken = get_app_token_from_wiki_node(token, TABLE_ID)
+    records = fetch_bitable_records(token, appToken)
 
     today = datetime.date.today()
     due_soon = []

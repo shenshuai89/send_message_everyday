@@ -99,7 +99,7 @@ def extract_rich_text(field_value):
 # === 主逻辑 ===
 def main():
     token = get_tenant_access_token()
-    appToken = get_app_token_from_wiki_node(token, TABLE_ID)
+    appToken = get_app_token_from_wiki_node(token)
     records = fetch_bitable_records(token, appToken)
 
     today = datetime.date.today()

@@ -13,21 +13,32 @@ BITABLE_APP_TOKEN = os.getenv("BITABLE_APP_TOKEN")
 TABLE_ID = os.getenv("TABLE_ID")
 WECHAT_WEBHOOK_URL = os.getenv("WECHAT_WEBHOOK_URL")
 
-if not all([FEISHU_APP_ID, FEISHU_APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID, WECHAT_WEBHOOK_URL]):
-    print("❌ 缺少必要环境变量，请检查 GitHub Secrets 设置。", file=sys.stderr)
-    print(f"App ID : {FEISHU_APP_ID}") 
-    print(f"App SECRET : {FEISHU_APP_SECRET}") 
-    print(f"App ID 长度: {len(FEISHU_APP_ID)}") 
-    print(f"App Secret 镇长度: {len(FEISHU_APP_SECRET)}")
+# 安全地检查环境变量
+missing_vars = []
+for name, value in [
+    ("FEISHU_APP_ID", FEISHU_APP_ID),
+    ("FEISHU_APP_SECRET", FEISHU_APP_SECRET),
+    ("BITABLE_APP_TOKEN", BITABLE_APP_TOKEN),
+    ("TABLE_ID", TABLE_ID),
+    ("WECHAT_WEBHOOK_URL", WECHAT_WEBHOOK_URL),
+]:
+    if not value:
+        missing_vars.append(name)
+
+if missing_vars:
+    print("❌ 以下环境变量缺失，请检查 GitHub Secrets 设置：", file=sys.stderr)
+    for var in missing_vars:
+        print(f"  - {var}", file=sys.stderr)
     sys.exit(1)
-else:
-    print("✅ 环境变量已加载：")
-    print(f"   FEISHU_APP_ID 长度: {len(FEISHU_APP_ID)}")
-    print(f"   FEISHU_APP_SECRET 长度: {len(FEISHU_APP_SECRET)} (值已隐藏)")
-    print(f"   BITABLE_APP_TOKEN: {BITABLE_APP_TOKEN}")
-    print(f"   TABLE_ID: {TABLE_ID}")
-    print(f"   WECHAT_WEBHOOK_URL 长度: {len(WECHAT_WEBHOOK_URL)} (值已隐藏)")
-    
+
+# 打印安全摘要（不泄露密钥）
+print("✅ 环境变量已加载：")
+print(f"   FEISHU_APP_ID 长度: {len(FEISHU_APP_ID)}")
+print(f"   FEISHU_APP_SECRET 长度: {len(FEISHU_APP_SECRET)} (值已隐藏)")
+print(f"   BITABLE_APP_TOKEN: {BITABLE_APP_TOKEN}")
+print(f"   TABLE_ID: {TABLE_ID}")
+print(f"   WECHAT_WEBHOOK_URL 长度: {len(WECHAT_WEBHOOK_URL)} (值已隐藏)")
+
 # === 获取飞书 tenant_access_token ===
 def get_tenant_access_token():
     url = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"

@@ -33,7 +33,7 @@ if missing_vars:
 
 # 打印安全摘要（不泄露密钥）
 print("✅ 环境变量已加载：")
-print(f"   FEISHU_APP_ID 长度: {FEISHU_APP_ID}")
+print(f"   FEISHU_APP_ID 长度: {len(FEISHU_APP_ID)}")
 print(f"   FEISHU_APP_SECRET 长度: {len(FEISHU_APP_SECRET)} (值已隐藏)")
 print(f"   BITABLE_APP_TOKEN: {BITABLE_APP_TOKEN}")
 print(f"   TABLE_ID: {TABLE_ID}")

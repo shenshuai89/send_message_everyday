@@ -27,9 +27,9 @@ jobs:
 
       - name: Run contract reminder script
         env:
-          FEISHU_APP_ID:  $ {{ secrets.FEISHU_APP_ID }}
-          FEISHU_APP_SECRET:  $ {{ secrets.FEISHU_APP_SECRET }}
-          BITABLE_APP_TOKEN:  $ {{ secrets.BITABLE_APP_TOKEN }}
-          TABLE_ID:  $ {{ secrets.TABLE_ID }}
-          WECHAT_WEBHOOK_URL:  $ {{ secrets.WECHAT_WEBHOOK_URL }}
+          FEISHU_APP_ID:  ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET:  ${{ secrets.FEISHU_APP_SECRET }}
+          BITABLE_APP_TOKEN:  ${{ secrets.BITABLE_APP_TOKEN }}
+          TABLE_ID:  ${{ secrets.TABLE_ID }}
+          WECHAT_WEBHOOK_URL:  ${{ secrets.WECHAT_WEBHOOK_URL }}
         run: python scripts/send_reminder.py

@@ -74,39 +74,23 @@ def main():
     for rec in records:
         fields = rec["fields"]
         
-        # --- 解析 ContractName ---
-        contract_name_raw = fields.get("ContractName")
-        if isinstance(contract_name_raw, list) and len(contract_name_raw) > 0:
-            contract_name = contract_name_raw[0].get("text", "未命名合同")
-        else:
-            contract_name = "未命名合同"
+        # --- 正确解析富文本字段 ---
+        contract_name = extract_rich_text(fields.get("ContractName")) or "未命名合同"
+        owner = extract_rich_text(fields.get("Owner")) or "未知负责人"
 
-        # --- 解析 Owner ---
-        owner_raw = fields.get("Owner")
-        if isinstance(owner_raw, list) and len(owner_raw) > 0:
-            owner = owner_raw[0].get("text", "未知负责人")
-        else:
-            owner = "未知负责人"
-
-        # --- 解析 Deadline（关键修改点）---
+        # --- 解析 Deadline（毫秒时间戳）---
         deadline_value = fields.get("Deadline")
         if not isinstance(deadline_value, (int, float)):
-            # 不是数字，跳过（可能是空值或格式错误）
             continue
 
         try:
-            # 飞书时间戳是毫秒，需除以 1000 转为秒
             deadline_date = datetime.datetime.fromtimestamp(
                 deadline_value / 1000, tz=datetime.timezone.utc
             ).date()
         except (ValueError, OSError):
-            # 时间戳无效（如过大/过小）
             continue
 
-        # 计算剩余天数
         delta = (deadline_date - today).days
-
-        # 提醒：未来 7 天内到期（含今天）
         if 0 <= delta <= 7:
             due_soon.append({
                 "name": contract_name,
@@ -140,7 +124,6 @@ def main():
         }
     }
 
-    # 发送至企业微信
     resp = requests.post(WECHAT_WEBHOOK_URL, json=msg)
     result = resp.json()
     if result.get("errcode") == 0:
@@ -148,3 +131,6 @@ def main():
     else:
         print(f"❌ 发送失败: {result}", file=sys.stderr)
         sys.exit(1)
+
+if __name__ == "__main__":
+    main()

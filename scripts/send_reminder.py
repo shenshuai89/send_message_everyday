@@ -46,6 +46,23 @@ def fetch_bitable_records(token):
         page_token = data["data"]["page_token"]
     return records
 
+# 从飞书富文本字段值中提取纯文本
+def extract_rich_text(field_value):
+    """
+    从飞书富文本字段值中提取纯文本。
+    支持：
+      - None / 空值
+      - 字符串（兼容普通文本字段）
+      - 富文本列表 [{"text": "..."}, ...]
+    """
+    if not field_value:
+        return ""
+    if isinstance(field_value, str):
+        return field_value
+    if isinstance(field_value, list):
+        return "".join(item.get("text", "") for item in field_value if isinstance(item, dict))
+    return str(field_value)
+
 # === 主逻辑 ===
 def main():
     token = get_tenant_access_token()
@@ -131,6 +148,3 @@ def main():
     else:
         print(f"❌ 发送失败: {result}", file=sys.stderr)
         sys.exit(1)
-
-if __name__ == "__main__":
-    main()

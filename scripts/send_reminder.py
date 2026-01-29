@@ -20,6 +20,8 @@ if not all([FEISHU_APP_ID, FEISHU_APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID, WECHA
     print(f"App ID 长度: {len(FEISHU_APP_ID)}") 
     print(f"App Secret 镇长度: {len(FEISHU_APP_SECRET)}")
     sys.exit(1)
+  else
+    print("✅ 环境变量配置正确。{FEISHU_APP_ID, FEISHU_APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID, WECHAT_WEBHOOK_URL}")
     
 # === 获取飞书 tenant_access_token ===
 def get_tenant_access_token():

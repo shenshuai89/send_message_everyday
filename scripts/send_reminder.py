@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import requests
 import datetime
 import os
+import json
 import sys
 
 # === 从环境变量读取配置 ===
@@ -13,31 +11,9 @@ BITABLE_APP_TOKEN = os.getenv("BITABLE_APP_TOKEN")
 TABLE_ID = os.getenv("TABLE_ID")
 WECHAT_WEBHOOK_URL = os.getenv("WECHAT_WEBHOOK_URL")
 
-# 安全地检查环境变量
-missing_vars = []
-for name, value in [
-    ("FEISHU_APP_ID", FEISHU_APP_ID),
-    ("FEISHU_APP_SECRET", FEISHU_APP_SECRET),
-    ("BITABLE_APP_TOKEN", BITABLE_APP_TOKEN),
-    ("TABLE_ID", TABLE_ID),
-    ("WECHAT_WEBHOOK_URL", WECHAT_WEBHOOK_URL),
-]:
-    if not value:
-        missing_vars.append(name)
-
-if missing_vars:
-    print("❌ 以下环境变量缺失，请检查 GitHub Secrets 设置：", file=sys.stderr)
-    for var in missing_vars:
-        print(f"  - {var}", file=sys.stderr)
+if not all([FEISHU_APP_ID, FEISHU_APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID, WECHAT_WEBHOOK_URL]):
+    print("❌ 缺少必要环境变量，请检查 GitHub Secrets 设置。")
     sys.exit(1)
-
-# 打印安全摘要（不泄露密钥）
-print("✅ 环境变量已加载：")
-print(f"   FEISHU_APP_ID 长度: {len(FEISHU_APP_ID)}")
-print(f"   FEISHU_APP_SECRET 长度: {len(FEISHU_APP_SECRET)} (值已隐藏)")
-print(f"   BITABLE_APP_TOKEN: {BITABLE_APP_TOKEN}")
-print(f"   TABLE_ID: {TABLE_ID}")
-print(f"   WECHAT_WEBHOOK_URL 长度: {len(WECHAT_WEBHOOK_URL)} (值已隐藏)")
 
 # === 获取飞书 tenant_access_token ===
 def get_tenant_access_token():
@@ -75,34 +51,54 @@ def main():
     token = get_tenant_access_token()
     records = fetch_bitable_records(token)
 
-    target_date = (datetime.date.today() + datetime.timedelta(days=7)).isoformat()
+    today = datetime.date.today()
     due_soon = []
 
     for rec in records:
         fields = rec["fields"]
         # ⚠️ 请根据你的飞书表格字段名修改以下键名！
-        deadline = fields.get("Deadline")  # 示例字段名，必须与你表格中的字段标识符一致
+        deadline_str = fields.get("Deadline")  # 示例字段名
         contract_name = fields.get("ContractName", "未命名合同")
         owner = fields.get("Owner", "未知负责人")
 
-        # 飞书日期字段返回格式为 "YYYY-MM-DD"
-        if isinstance(deadline, str) and deadline == target_date:
+        # 只处理字符串格式的日期
+        if not isinstance(deadline_str, str):
+            continue
+
+        try:
+            deadline = datetime.datetime.strptime(deadline_str, "%Y-%m-%d").date()
+        except ValueError:
+            # 日期格式无效，跳过
+            continue
+
+        # 计算剩余天数（可以是负数，表示已过期）
+        delta = (deadline - today).days
+
+        # 提醒：未来 7 天内到期（含今天），即 0 <= delta <= 7
+        if 0 <= delta <= 7:
             due_soon.append({
                 "name": contract_name,
                 "owner": owner,
-                "date": deadline
+                "date": deadline_str,
+                "days_left": delta
             })
 
     if not due_soon:
-        print("✅ 今日无即将到期的合同（7天内）")
+        print("✅ 未来7天内无合同到期（含今天）")
         return
 
     # 构造企业微信消息
-    content = "【合同到期提醒】以下合同将在7天后到期，请及时处理：\n\n"
+    content = "【合同到期提醒】以下合同将在7天内到期，请及时处理：\n\n"
     for item in due_soon:
+        if item["days_left"] == 0:
+            suffix = "（今天到期！）"
+        elif item["days_left"] == 1:
+            suffix = "（明天到期！）"
+        else:
+            suffix = f"（{item['days_left']}天后到期）"
         content += f"📄 合同名称：{item['name']}\n"
         content += f"👤 负责人：{item['owner']}\n"
-        content += f"🗓 截止日期：{item['date']}\n"
+        content += f"🗓 截止日期：{item['date']} {suffix}\n"
         content += "------------------------\n"
 
     msg = {

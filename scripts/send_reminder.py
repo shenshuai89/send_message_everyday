@@ -44,7 +44,7 @@ def get_app_token_from_wiki_node(tenant_access_token):
     url = "https://open.feishu.cn/open-apis/wiki/v2/spaces/get_node"
     params = {
         "obj_type": "wiki",
-        "token": {BITABLE_APP_TOKEN}
+        "token": BITABLE_APP_TOKEN
     }
     headers = {
         "Authorization": f"Bearer {tenant_access_token}"

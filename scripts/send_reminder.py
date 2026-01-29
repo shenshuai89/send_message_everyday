@@ -15,8 +15,12 @@ WECHAT_WEBHOOK_URL = os.getenv("WECHAT_WEBHOOK_URL")
 
 if not all([FEISHU_APP_ID, FEISHU_APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID, WECHAT_WEBHOOK_URL]):
     print("❌ 缺少必要环境变量，请检查 GitHub Secrets 设置。", file=sys.stderr)
+    print(f"App ID : {FEISHU_APP_ID}") 
+    print(f"App SECRET : {FEISHU_APP_SECRET}") 
+    print(f"App ID 长度: {len(FEISHU_APP_ID)}") 
+    print(f"App Secret 镇长度: {len(FEISHU_APP_SECRET)}")
     sys.exit(1)
-
+    
 # === 获取飞书 tenant_access_token ===
 def get_tenant_access_token():
     url = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"

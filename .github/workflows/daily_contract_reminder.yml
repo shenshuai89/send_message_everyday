@@ -3,7 +3,7 @@ name: Daily Contract Expiry Reminder
 on:
   schedule:
     # 每天 UTC 时间 01:00 触发（对应北京时间 09:00）
-    - cron: '25 10 * * *'
+    - cron: '32 2 * * *'
   # 允许手动触发用于测试
   workflow_dispatch:
 
